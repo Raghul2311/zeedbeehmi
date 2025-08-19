@@ -196,7 +196,6 @@ class _UnitDialogboxState extends State<UnitDialogbox> {
     // media quires for height & width ....
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-
     return AlertDialog(
       contentPadding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
