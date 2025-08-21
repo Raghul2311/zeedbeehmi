@@ -193,7 +193,7 @@ class _UnitDialogboxState extends State<UnitDialogbox> {
 
   @override
   Widget build(BuildContext context) {
-    // media quires for height & width ....
+    // media quries for height & width ....
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     return AlertDialog(
@@ -230,7 +230,6 @@ class _UnitDialogboxState extends State<UnitDialogbox> {
                 ),
               ),
               SpacerWidget.size32,
-
               // Temperature Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:zedbeemodbus/fields/shared_pref_helper.dart';
 import 'package:zedbeemodbus/model_folder/parameters_model.dart';
 import 'package:zedbeemodbus/services_class/modbus_services.dart';
 
@@ -7,6 +8,7 @@ class ProviderServices extends ChangeNotifier {
   final ModbusServices _modbusService = ModbusServices(ip: "192.168.0.105");
   final List<ParameterModel> _parameters = [];
   List<int> _latestValues = [];
+  List<int> _checkedIndexes = [];
   Timer? _autoRefreshTimer;
   bool _isWriting = false;
   bool _isSwitchLoading = false;
@@ -14,8 +16,27 @@ class ProviderServices extends ChangeNotifier {
   bool get isSwitchLoading => _isSwitchLoading;
   List<ParameterModel> get parameters => _parameters;
   List<int> get latestValues => _latestValues;
+  List<int> get checkedIndexes => _checkedIndexes;
 
-  /// All parameter names + units
+  // Load saved parameters + checked index
+  Future<void> loadSavedData() async {
+    final savedParams = await SharedPrefHelper.getParameters();
+    final savedIndexes = await SharedPrefHelper.getCheckedIndexes();
+    _parameters
+      ..clear()
+      ..addAll(savedParams);
+    _checkedIndexes = savedIndexes;
+    notifyListeners();
+  }
+
+  // Save current parameters + checked indexes
+  Future<void> saveData() async {
+    await SharedPrefHelper.saveParameters(_parameters);
+    await SharedPrefHelper.saveCheckedIndexes(_checkedIndexes);
+  }
+
+  // parameter name with there units .....
+
   final List<Map<String, String>> allParameters = [
     {"name": "Status", "unit": ""},
     {"name": "Frequency", "unit": "Hz"},
@@ -77,8 +98,7 @@ class ProviderServices extends ChangeNotifier {
     {"name": "Schedule OFF Time", "unit": ""},
     {"name": "Poll Time", "unit": ""},
   ];
-
-  /// Float-type parameters
+  // flaot Data Types Parameters ........
   final List<String> floatValueNames = [
     "Frequency",
     "Water In",
@@ -97,16 +117,7 @@ class ProviderServices extends ChangeNotifier {
     "Min Set Temp",
     "Max Set Temp",
   ];
-
-  // Get unit by index
-  // String getUnit(int index) {
-  //   if (index < allParameters.length) {
-  //     return allParameters[index]["unit"] ?? "";
-  //   }
-  //   return "";
-  // }
-
-  // Format values based on parameter name + append units
+  // intergers function status ....
   String getFormattedValue(String name, int rawValue) {
     String value;
     if (name == "Status" || name == "Schedule ON/OFF") {
@@ -143,7 +154,6 @@ class ProviderServices extends ChangeNotifier {
       value = rawValue.toString();
     }
 
-    // Append unit if available(matches the parameter with units)
     final param = allParameters.firstWhere(
       (p) => p["name"] == name,
       orElse: () => {"unit": ""},
@@ -152,7 +162,7 @@ class ProviderServices extends ChangeNotifier {
     return unit.isNotEmpty ? "$value $unit" : value;
   }
 
-  /// Add parameters (avoids duplicates)
+  // add Parameters Functions ........
   void addParameters(List<int> indexes, List<Map<String, String>> allParams) {
     for (var i in indexes) {
       if (!_parameters.any((param) => param.registerIndex == i)) {
@@ -166,24 +176,28 @@ class ProviderServices extends ChangeNotifier {
         );
       }
     }
+    // Parameters by index values .........
+    _checkedIndexes.addAll(indexes.where((i) => !_checkedIndexes.contains(i)));
     notifyListeners();
   }
 
-  // remove parameters function ...
+  // Remove Parameters Function ...........
   void removeParameter(int registerIndex) {
     _parameters.removeWhere((param) => param.registerIndex == registerIndex);
+    _checkedIndexes.remove(registerIndex);
     notifyListeners();
   }
 
-  // remove parameter by index ...
+  // Remove by index ..........
   void removeParameterByIndex(int index) {
     if (index >= 0 && index < _parameters.length) {
+      _checkedIndexes.remove(_parameters[index].registerIndex);
       _parameters.removeAt(index);
       notifyListeners();
     }
   }
 
-  // update parameter position ..
+  // Parameter Positions ............
   void updatePosition(int index, double dx, double dy) {
     if (index >= 0 && index < _parameters.length) {
       final item = _parameters[index];
@@ -198,7 +212,7 @@ class ProviderServices extends ChangeNotifier {
     }
   }
 
-  // get the parameters ...
+  // Get all the Parmeters by Registers .........
   Future<void> fetchRegisters() async {
     if (_isWriting) return;
     try {
@@ -215,27 +229,27 @@ class ProviderServices extends ChangeNotifier {
     }
   }
 
-  // write parameter by registers ...
+  // Write Parameters Function ............
   Future<void> writeRegister(int address, int value) async {
     _isWriting = true;
-    stopAutoRefresh(); // auto refresh
+    stopAutoRefresh(); // stop refresh
     try {
       await _modbusService.writeRegister(address, value);
       await Future.delayed(const Duration(milliseconds: 100));
       await fetchRegisters();
     } finally {
       _isWriting = false;
-      startAutoRefresh();
+      startAutoRefresh(); // start refresh
     }
   }
 
-  // toggle switch loading ...
+  // ON/OFF toggle switch button .......
   void setswitchLoading(bool loading) {
     _isSwitchLoading = loading;
     notifyListeners();
   }
 
-  // write register by instant ....
+  // Write Register with integers ......
   Future<void> writeRegisterInstant(int address, int value) async {
     setswitchLoading(true);
     try {
@@ -247,7 +261,7 @@ class ProviderServices extends ChangeNotifier {
     }
   }
 
-  // Auto refresh function
+  // Auto referesh function  .....
   void startAutoRefresh() {
     if (_autoRefreshTimer?.isActive ?? false) return;
     _autoRefreshTimer = Timer.periodic(
@@ -256,18 +270,30 @@ class ProviderServices extends ChangeNotifier {
     );
   }
 
+  // cancel refresh .......
   void stopAutoRefresh() {
     _autoRefreshTimer?.cancel();
   }
 
-  // parameter selection ...
+  // selected Parameters
   bool isParameterSelected(int registerIndex) {
     return _parameters.any((param) => param.registerIndex == registerIndex);
   }
 
-  // clear all parameters ...
+  // clear all Parameters ....
   void clearParameters() {
     _parameters.clear();
+    _checkedIndexes.clear();
     notifyListeners();
   }
+
+  // show the selected parameter in multiple screen .....
+  void setParameters(List<ParameterModel> param) {
+    _parameters
+      ..clear()
+      ..addAll(param);
+    notifyListeners();
+  }
+
+  
 }
