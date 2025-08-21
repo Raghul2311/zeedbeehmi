@@ -15,6 +15,8 @@ void main() async {
     DeviceOrientation.landscapeRight,
     DeviceOrientation.landscapeLeft,
   ]);
+  // load Theme status
+  themeNotifier.loadTheme();
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => ProviderServices())],

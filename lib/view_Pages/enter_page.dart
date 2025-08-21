@@ -4,7 +4,6 @@ import 'package:zedbeemodbus/fields/colors.dart';
 import 'package:zedbeemodbus/fields/spacer_widget.dart';
 import 'package:zedbeemodbus/view_Pages/pin_screen.dart';
 
-
 class EnterPage extends StatefulWidget {
   const EnterPage({super.key});
 
@@ -18,18 +17,20 @@ class _EnterPageState extends State<EnterPage> {
     // media query width size
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+     // Dark theme color
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.white54 : AppColors.darkblue;
     return Scaffold(
+      backgroundColor: Theme.of(
+        context,
+      ).scaffoldBackgroundColor, // theme background color
       body: Padding(
         padding: const EdgeInsets.all(18.0),
         child: Container(
           height: screenHeight,
           width: screenWidth,
           decoration: BoxDecoration(
-            color: Colors.grey.shade200
-            // gradient: LinearGradient(
-            //   colors: [Color(0xff003D73), Color(0xff00C2C7)],
-            //   // colors: [Color(0xff0D0A1B), Color(0xff3D145D)],
-            // ),
+            // color: Colors.grey.shade200
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -40,7 +41,7 @@ class _EnterPageState extends State<EnterPage> {
                   "AIR HANDLING UNIT",
                   style: GoogleFonts.openSans(
                     fontSize: 70,
-                    color: AppColors.darkblue,
+                    color: textColor,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 10,
                   ),
@@ -65,9 +66,9 @@ class _EnterPageState extends State<EnterPage> {
                       borderRadius: BorderRadius.circular(60),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.white,
+                          color: textColor,
                           blurRadius: 5,
-                          offset: Offset(0, 4),
+                          offset: Offset(0, 1),
                         ),
                       ],
                     ),

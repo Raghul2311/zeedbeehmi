@@ -5,7 +5,6 @@ import 'package:zedbeemodbus/view_Pages/enter_page.dart';
 import 'package:zedbeemodbus/fields/colors.dart';
 import 'package:zedbeemodbus/fields/spacer_widget.dart';
 
-
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override
@@ -29,7 +28,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(
+        context,
+      ).scaffoldBackgroundColor, // theme background color
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

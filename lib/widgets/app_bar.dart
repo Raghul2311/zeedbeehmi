@@ -5,7 +5,6 @@ import 'package:zedbeemodbus/fields/colors.dart';
 import 'package:zedbeemodbus/fields/spacer_widget.dart';
 import 'package:zedbeemodbus/main.dart';
 
-
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;
   final String selectedSubScreen; // selecting the drop down pages...
@@ -123,7 +122,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () {
             themeNotifier.toggleTheme(); // Toggle the theme globally change
           },
-
           icon: Icon(
             isDarkMode ? Icons.wb_sunny : Icons.dark_mode,
             color: Colors.white,

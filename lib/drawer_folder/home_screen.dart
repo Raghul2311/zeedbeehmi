@@ -53,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final provider = context.watch<ProviderServices>(); //provider
+    final provider = context.watch<ProviderServices>(); // listen
     // check the last value
     final latestValue = provider.latestValues;
     final statusValue = latestValue.isNotEmpty ? latestValue[0] : 0;
