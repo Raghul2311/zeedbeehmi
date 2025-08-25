@@ -19,7 +19,10 @@ void main() async {
   themeNotifier.loadTheme();
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => ProviderServices())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProviderServices()),
+        ChangeNotifierProvider(create: (_) => ThemeNotifier()),
+      ],
       child: const MyApp(),
     ),
   );

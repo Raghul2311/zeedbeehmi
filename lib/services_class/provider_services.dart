@@ -294,6 +294,4 @@ class ProviderServices extends ChangeNotifier {
       ..addAll(param);
     notifyListeners();
   }
-
-  
 }

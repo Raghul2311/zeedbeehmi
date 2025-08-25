@@ -7,7 +7,6 @@ import 'package:zedbeemodbus/drawer_folder/home_screen.dart';
 import 'package:zedbeemodbus/fields/colors.dart';
 import 'package:zedbeemodbus/fields/spacer_widget.dart';
 
-
 class PinScreen extends StatefulWidget {
   const PinScreen({super.key});
 
@@ -17,9 +16,8 @@ class PinScreen extends StatefulWidget {
 
 class _PinScreenState extends State<PinScreen> {
   bool _isLoading = false; // for next button
-  final TextEditingController pinController =
-      TextEditingController(); // controller for pin textfield
-
+  // pin controller
+  final TextEditingController pinController = TextEditingController();
   // pin validate function.................
   void _validatePin() async {
     setState(() {

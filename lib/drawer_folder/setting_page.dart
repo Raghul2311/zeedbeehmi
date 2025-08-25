@@ -42,6 +42,7 @@ class _SettingPageState extends State<SettingPage> {
     super.initState();
     selectedType = equimentType.first;
     selectedName = equimentName.first;
+    // Get the loaded parameters
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProviderServices>().loadSavedData();
     });
@@ -186,7 +187,6 @@ class _SettingPageState extends State<SettingPage> {
                             }).toList(),
                           ),
                         ),
-
                         SpacerWidget.size16w,
                         // Add AHU Button
                         InkWell(

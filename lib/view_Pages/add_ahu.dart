@@ -31,10 +31,9 @@ class _AddAhuFieldScreenState extends State<AddAhuFieldScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Theme Dark
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(
-      context,
-    ).size.width; // media query for width
+    final screenWidth = MediaQuery.of(context).size.width;
     // colors for dark theme...........
     final backgroundColor = isDarkMode ? Colors.grey[900] : AppColors.lightblue;
     final inputFillColor = isDarkMode ? Colors.black12 : Colors.white;
