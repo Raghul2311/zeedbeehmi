@@ -5,7 +5,7 @@ import 'package:zedbeemodbus/model_folder/parameters_model.dart';
 import 'package:zedbeemodbus/services_class/modbus_services.dart';
 
 class ProviderServices extends ChangeNotifier {
-  final ModbusServices _modbusService = ModbusServices(ip: "192.168.0.105");
+  final ModbusServices _modbusService = ModbusServices(ip: "192.168.0.127");
   final List<ParameterModel> _parameters = [];
   List<int> _latestValues = [];
   List<int> _checkedIndexes = [];
@@ -98,7 +98,7 @@ class ProviderServices extends ChangeNotifier {
     {"name": "Schedule OFF Time", "unit": ""},
     {"name": "Poll Time", "unit": ""},
   ];
-  // flaot Data Types Parameters ........
+  // float Data Types Parameters ........
   final List<String> floatValueNames = [
     "Frequency",
     "Water In",
