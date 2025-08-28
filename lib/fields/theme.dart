@@ -21,7 +21,7 @@ class ThemeNotifier extends ValueNotifier<ThemeMode> {
   Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     final savedTheme = prefs.getString(_themeKey);
-
+    // dark theme mode .......
     if (savedTheme == "dark") {
       value = ThemeMode.dark;
     } else if (savedTheme == "light") {

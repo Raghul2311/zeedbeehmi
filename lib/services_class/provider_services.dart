@@ -148,6 +148,12 @@ class ProviderServices extends ChangeNotifier {
           : rawValue == 1
           ? "Fire Event"
           : "--";
+    } else if (name == "Filter Status") {
+      value = rawValue == 0
+          ? "Clean"
+          : rawValue == 1
+          ? "Dirty"
+          : "--";
     } else if (floatValueNames.contains(name)) {
       value = (rawValue / 100).toStringAsFixed(2);
     } else {

@@ -75,7 +75,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     super.dispose();
   }
 
-  // write function
+  // write function in same textfield
   Future<void> writeParameter(
     BuildContext context,
     int address,
@@ -84,21 +84,9 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
   ) async {
     try {
       // Accept int or float values ...
-      final writeValue = (double.parse(value) * 100).toInt();
+      final writeValue = (double.parse(value) / 100).toInt();
 
       await context.read<ProviderServices>().writeRegister(address, writeValue);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "$paramName changed to $value",
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +101,64 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         );
       }
     }
+  }
+  // Read Function in same field
+  Future<void> readParameter(
+    BuildContext context,
+    int address,
+    TextEditingController controller,
+    String paramName,
+  ) async {
+    try {
+      // Fetch latest values from provider
+      await context.read<ProviderServices>().fetchRegisters();
+      final latestValues = context.read<ProviderServices>().latestValues;
+
+      if (address < latestValues.length) {
+        // Divide by 100 for float values
+        final double value = latestValues[address] / 100;
+        controller.text = value.toStringAsFixed(2);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Failed to read $paramName: $e",
+              style: const TextStyle(color: Colors.black),
+            ),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Automatically load the values in fields
+    Future.microtask(() {
+      readParameter(context, 49, minTemController, "Min Temp");
+      readParameter(context, 50, maxTempController, "Max Temp");
+      readParameter(context, 36, minFlowController, "Min Flowrate");
+      readParameter(context, 35, maxFlowController, "Max Flowrate");
+      readParameter(context, 30, minFreqController, "Min Freq");
+      readParameter(context, 31, maxFreqController, "Max Freq");
+      readParameter(context, 23, watervalvecontroller, "water value");
+      readParameter(context, 38, inletcontroller, "Inlet Threshold");
+      readParameter(context, 43, waterdeltacontroller, "WaterdeltaT");
+      readParameter(context, 4, waterpressurecontroller, "Water Pressure");
+      readParameter(context, 5, ductpressurecontroller, "Duct Pressure");
+      readParameter(
+        context,
+        37,
+        pressureconstantcontroller,
+        "Pressure Constant",
+      );
+      readParameter(context, 33, pidconstantcontroller, "PDI Constant");
+    });
   }
 
   // set button function .....
@@ -427,258 +473,281 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      // floating action button starts here .............
-      floatingActionButton: Container(
-        padding: EdgeInsets.all(12),
-        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 25),
-        decoration: BoxDecoration(
-          color: isDarkMode ? Colors.black : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Expanded(child: _equipmentTypeDrowpdown()),
-            SpacerWidget.size32w,
-            Expanded(child: _equipmentNameDropdown()),
-            SpacerWidget.size16w,
-            SizedBox(
-              height: 55,
-              width: screenWidth * 0.15,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+    return Consumer(
+      builder: (context, value, child) {
+        return Scaffold(
+          // floating action button starts here .............
+          floatingActionButton: Container(
+            padding: EdgeInsets.all(12),
+            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 25),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.black : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
                 ),
-                onPressed: () {
-                  _handleSetButton(); // set button function
-                },
-                child: Center(
-                  child: isLoading
-                      ? const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        )
-                      : Text(
-                          "Set",
-                          style: GoogleFonts.openSans(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
-      key: _scaffoldKey,
-      appBar: CustomAppBar(scaffoldKey: _scaffoldKey),
-      drawer: AppDrawer(selectedScreen: 'configure'),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                height: 60,
-                width: double.infinity,
-                decoration: BoxDecoration(color: Colors.grey.shade400),
-                child: Center(
-                  child: Text(
-                    "Configuration Parameter",
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Expanded(child: _equipmentTypeDrowpdown()),
+                SpacerWidget.size32w,
+                Expanded(child: _equipmentNameDropdown()),
+                SpacerWidget.size16w,
+                SizedBox(
+                  height: 55,
+                  width: screenWidth * 0.15,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.orange,
+                      foregroundColor: Colors.white,
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    onPressed: () {
+                      _handleSetButton(); // set button function
+                    },
+                    child: Center(
+                      child: isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            )
+                          : Text(
+                              "Set",
+                              style: GoogleFonts.openSans(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                     ),
                   ),
                 ),
-              ),
-              SpacerWidget.size32,
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        _customTextfield(
-                          "Min Temp",
-                          minTemController,
-                          hintText: "0-50",
-                          validator: (value) =>
-                              numberValidator(value, "Min Temp", 0, 50),
-                        ),
-                        SpacerWidget.size16w,
-                        _customTextfield(
-                          "Max Temp",
-                          maxTempController,
-                          hintText: "0-50",
-                          validator: (value) =>
-                              numberValidator(value, "Max Temp", 0, 50),
-                        ),
-                        SpacerWidget.size16w,
-                        _customTextfield(
-                          "Min Flowrate",
-                          minFlowController,
-                          hintText: "0-50",
-                          validator: (value) =>
-                              numberValidator(value, "Min Flowrate", 0, 50),
-                        ),
-                        SpacerWidget.size16w,
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        _customTextfield(
-                          "Max Flowrate",
-                          maxFlowController,
-                          hintText: "0-50",
-                          validator: (value) =>
-                              numberValidator(value, "Max Flowrate", 0, 50),
-                        ),
-                        SpacerWidget.size16w,
-                        _customTextfield(
-                          "Max Freq",
-                          maxFreqController,
-                          hintText: "0-50",
-                          validator: (value) =>
-                              numberValidator(value, "Max Frequency", 0, 50),
-                        ),
-                        SpacerWidget.size16w,
-                        _customTextfield(
-                          "Min Freq",
-                          minFreqController,
-                          hintText: "0-50",
-                          validator: (value) =>
-                              numberValidator(value, "Min Frequecny", 0, 50),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        // _customTextfield("BTU", btucontroller),
-                        // SpacerWidget.size16w,
-                        _customTextfield(
-                          "water valve",
-                          watervalvecontroller,
-                          hintText: "0-100",
-                          validator: (value) =>
-                              numberValidator(value, "Water value", 0, 100),
-                        ),
-                        SpacerWidget.size16w,
-                        // _customTextfield(
-                        //   "Actuator Direction",
-                        //   actuatordircontroller,
-                        // ),
-                        _customTextfield(
-                          "Inlet Threshold",
-                          inletcontroller,
-                          hintText: "0-15",
-                          validator: (value) =>
-                              numberValidator(value, "Inlet Threshold", 0, 15),
-                        ),
-                        SpacerWidget.size16w,
-                        _customTextfield(
-                          "water delta T",
-                          waterdeltacontroller,
-                          hintText: "0-10",
-                          validator: (value) =>
-                              numberValidator(value, "Water Delta", 0, 10),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        _customTextfield(
-                          "Water Pressure",
-                          waterpressurecontroller,
-                          hintText: "0-50",
-                          validator: (value) =>
-                              numberValidator(value, "Water Pressure", 0, 50),
-                        ),
-                        SpacerWidget.size16w,
-                        _customTextfield(
-                          "Duct pressure",
-                          ductpressurecontroller,
-                          hintText: "0-2500",
-                          validator: (value) =>
-                              numberValidator(value, "Duct Pressure", 0, 2500),
-                        ),
-                        SpacerWidget.size16w,
-                        _customTextfield(
-                          "Pressure constant",
-                          pressureconstantcontroller,
-                          hintText: "0-5",
-                          validator: (value) =>
-                              numberValidator(value, "Pressure Constant", 0, 5),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        _customTextfield(
-                          "PDI constant",
-                          pidconstantcontroller,
-                          hintText: "0-10",
-                          validator: (value) =>
-                              numberValidator(value, "PDI Constant", 0, 10),
-                        ),
-                      ],
-                    ),
-                    SpacerWidget.size32,
-                    // configuration toggle button
-                    Row(
-                      children: [
-                        // Internal and External
-                        CustomToggleContainer(
-                          title: "BTU Selection",
-                          options: ["Internal", "External"],
-                          fillColor: Colors.green,
-                          splashColor: Colors.green.shade100,
-                          titleColor: Colors.green,
-                        ),
-                        SpacerWidget.size64w,
-                        // temp & pressure
-                        CustomToggleContainer(
-                          title: "Control",
-                          options: ["Temperature", "Pressure"],
-                          fillColor: Colors.red,
-                          splashColor: Colors.red.shade100,
-                          titleColor: Colors.red,
-                        ),
-                        SpacerWidget.size64w,
-                        // Actuator Direction
-                        CustomToggleContainer(
-                          title: "Actuator Direction",
-                          options: ['Forward', 'Reverse'],
-                          fillColor: Colors.blue,
-                          splashColor: Colors.blue.shade100,
-                          titleColor: Colors.blue,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 180),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.endContained,
+          key: _scaffoldKey,
+          appBar: CustomAppBar(scaffoldKey: _scaffoldKey),
+          drawer: AppDrawer(selectedScreen: 'configure'),
+          body: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Container(
+                    height: 60,
+                    width: double.infinity,
+                    decoration: BoxDecoration(color: Colors.grey.shade400),
+                    child: Center(
+                      child: Text(
+                        "Configuration Parameter",
+                        style: GoogleFonts.poppins(
+                          fontSize: 22,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SpacerWidget.size32,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            _customTextfield(
+                              "Min Temp",
+                              minTemController,
+                              hintText: "0-50",
+                              validator: (value) =>
+                                  numberValidator(value, "Min Temp", 0, 50),
+                            ),
+                            SpacerWidget.size16w,
+                            _customTextfield(
+                              "Max Temp",
+                              maxTempController,
+                              hintText: "0-50",
+                              validator: (value) =>
+                                  numberValidator(value, "Max Temp", 0, 50),
+                            ),
+                            SpacerWidget.size16w,
+                            _customTextfield(
+                              "Min Flowrate",
+                              minFlowController,
+                              hintText: "0-50",
+                              validator: (value) =>
+                                  numberValidator(value, "Min Flowrate", 0, 50),
+                            ),
+                            SpacerWidget.size16w,
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            _customTextfield(
+                              "Max Flowrate",
+                              maxFlowController,
+                              hintText: "0-50",
+                              validator: (value) =>
+                                  numberValidator(value, "Max Flowrate", 0, 50),
+                            ),
+                            SpacerWidget.size16w,
+                            _customTextfield(
+                              "Max Freq",
+                              maxFreqController,
+                              hintText: "0-50",
+                              validator: (value) => numberValidator(
+                                value,
+                                "Max Frequency",
+                                0,
+                                50,
+                              ),
+                            ),
+                            SpacerWidget.size16w,
+                            _customTextfield(
+                              "Min Freq",
+                              minFreqController,
+                              hintText: "0-50",
+                              validator: (value) => numberValidator(
+                                value,
+                                "Min Frequecny",
+                                0,
+                                50,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            _customTextfield(
+                              "water valve",
+                              watervalvecontroller,
+                              hintText: "0-100",
+                              validator: (value) =>
+                                  numberValidator(value, "Water value", 0, 100),
+                            ),
+                            SpacerWidget.size16w,
+                            _customTextfield(
+                              "Inlet Threshold",
+                              inletcontroller,
+                              hintText: "0-15",
+                              validator: (value) => numberValidator(
+                                value,
+                                "Inlet Threshold",
+                                0,
+                                15,
+                              ),
+                            ),
+                            SpacerWidget.size16w,
+                            _customTextfield(
+                              "water delta T",
+                              waterdeltacontroller,
+                              hintText: "0-10",
+                              validator: (value) =>
+                                  numberValidator(value, "Water Delta", 0, 10),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            _customTextfield(
+                              "Water Pressure",
+                              waterpressurecontroller,
+                              hintText: "0-50",
+                              validator: (value) => numberValidator(
+                                value,
+                                "Water Pressure",
+                                0,
+                                50,
+                              ),
+                            ),
+                            SpacerWidget.size16w,
+                            _customTextfield(
+                              "Duct pressure",
+                              ductpressurecontroller,
+                              hintText: "0-2500",
+                              validator: (value) => numberValidator(
+                                value,
+                                "Duct Pressure",
+                                0,
+                                2500,
+                              ),
+                            ),
+                            SpacerWidget.size16w,
+                            _customTextfield(
+                              "Pressure constant",
+                              pressureconstantcontroller,
+                              hintText: "0-5",
+                              validator: (value) => numberValidator(
+                                value,
+                                "Pressure Constant",
+                                0,
+                                5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            _customTextfield(
+                              "PDI constant",
+                              pidconstantcontroller,
+                              hintText: "0-10",
+                              validator: (value) =>
+                                  numberValidator(value, "PDI Constant", 0, 10),
+                            ),
+                          ],
+                        ),
+                        SpacerWidget.size32,
+                        // configuration toggle button
+                        Row(
+                          children: [
+                            // Internal and External
+                            CustomToggleContainer(
+                              title: "BTU Selection",
+                              options: ["Internal", "External"],
+                              fillColor: Colors.green,
+                              splashColor: Colors.green.shade100,
+                              titleColor: Colors.green,
+                            ),
+                            SpacerWidget.size64w,
+                            // temp & pressure
+                            CustomToggleContainer(
+                              title: "Control",
+                              options: ["Temperature", "Pressure"],
+                              fillColor: Colors.red,
+                              splashColor: Colors.red.shade100,
+                              titleColor: Colors.red,
+                            ),
+                            SpacerWidget.size64w,
+                            // Actuator Direction
+                            CustomToggleContainer(
+                              title: "Actuator Direction",
+                              options: ['Forward', 'Reverse'],
+                              fillColor: Colors.blue,
+                              splashColor: Colors.blue.shade100,
+                              titleColor: Colors.blue,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 180),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
