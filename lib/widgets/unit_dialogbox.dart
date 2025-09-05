@@ -71,6 +71,7 @@ class _UnitDialogboxState extends State<UnitDialogbox> {
     String? errorText,
     String hintText = "",
   }) {
+    // Theme colour ......
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final inputFillColor = isDarkMode ? Colors.black12 : Colors.white;
     final labelColor = isDarkMode ? Colors.white : Colors.black87;
@@ -191,6 +192,7 @@ class _UnitDialogboxState extends State<UnitDialogbox> {
     }
   }
 
+  // Alert Dialogue Widget ...........
   @override
   Widget build(BuildContext context) {
     // media quries for height & width ....
@@ -264,7 +266,6 @@ class _UnitDialogboxState extends State<UnitDialogbox> {
                         // close the dialog box
                         Navigator.pop(context);
                       });
-
                       setTemperatureController.clear();
                     }
                   }),
@@ -452,6 +453,7 @@ class _UnitDialogboxState extends State<UnitDialogbox> {
           ),
         ),
       ),
+      // close button ...
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),

@@ -87,21 +87,9 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
       final writeValue = (double.parse(value) / 100).toInt();
 
       await context.read<ProviderServices>().writeRegister(address, writeValue);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Failed to change $paramName: $e",
-              style: const TextStyle(color: Colors.black),
-            ),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
+    } catch (_) {}
   }
+
   // Read Function in same field
   Future<void> readParameter(
     BuildContext context,
@@ -119,20 +107,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         final double value = latestValues[address] / 100;
         controller.text = value.toStringAsFixed(2);
       }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Failed to read $paramName: $e",
-              style: const TextStyle(color: Colors.black),
-            ),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
+    } catch (_) {}
   }
 
   @override
@@ -175,17 +150,6 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         waterpressurecontroller.text.isEmpty &&
         pressureconstantcontroller.text.isEmpty &&
         pidconstantcontroller.text.isEmpty) {
-      // Empty clicking on set button
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Please set some values",
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
       return;
     }
     // validate fields ..
@@ -309,21 +273,18 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     setState(() {
       isLoading = false; // stop loading
     });
-
-    // clear fields ............
-    minTemController.clear();
-    maxTempController.clear();
-    minFlowController.clear();
-    maxFlowController.clear();
-    minFreqController.clear();
-    maxFreqController.clear();
-    watervalvecontroller.clear();
-    inletcontroller.clear();
-    waterdeltacontroller.clear();
-    waterpressurecontroller.clear();
-    ductpressurecontroller.clear();
-    pressureconstantcontroller.clear();
-    pidconstantcontroller.clear();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Parameters set successfully",
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   // Text field widget ...
@@ -532,6 +493,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
               ],
             ),
           ),
+          // Action button ......
           floatingActionButtonLocation:
               FloatingActionButtonLocation.endContained,
           key: _scaffoldKey,
