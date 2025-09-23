@@ -5,18 +5,36 @@ import 'package:zedbeemodbus/model_folder/parameters_model.dart';
 import 'package:zedbeemodbus/services_class/modbus_services.dart';
 
 class ProviderServices extends ChangeNotifier {
-  final ModbusServices _modbusService = ModbusServices(ip: "192.168.0.127");
+  ModbusServices? _modbusServices;
   final List<ParameterModel> _parameters = [];
   List<int> _latestValues = [];
   List<int> _checkedIndexes = [];
   Timer? _autoRefreshTimer;
   bool _isWriting = false;
   bool _isSwitchLoading = false;
+  String _currentIp = "127.0.0.1";
 
   bool get isSwitchLoading => _isSwitchLoading;
   List<ParameterModel> get parameters => _parameters;
   List<int> get latestValues => _latestValues;
   List<int> get checkedIndexes => _checkedIndexes;
+  String get currentIp => _currentIp;
+
+  // load saved ip form shared prefs
+  Future<void> init() async {
+    String? saveIp = await SharedPrefHelper.getIp();
+    _currentIp = saveIp ?? "127.0.0.1";
+    _modbusServices = ModbusServices(ip: _currentIp);
+
+  }
+
+  // update IP dyamically
+  Future<void> updateIp(String newIp) async {
+    _currentIp = newIp;
+    await SharedPrefHelper.saveIp(newIp);
+    _modbusServices = ModbusServices(ip: currentIp);
+    notifyListeners();
+  }
 
   // Load saved parameters + checked index
   Future<void> loadSavedData() async {
@@ -220,9 +238,9 @@ class ProviderServices extends ChangeNotifier {
 
   // Get all the Parmeters by Registers .........
   Future<void> fetchRegisters() async {
-    if (_isWriting) return;
+    if (_isWriting || _modbusServices == null) return;
     try {
-      _latestValues = await _modbusService.readRegisters(0, 59);
+      _latestValues = await _modbusServices!.readRegisters(0, 59);
       for (var param in _parameters) {
         if (param.registerIndex != null &&
             param.registerIndex! < _latestValues.length) {
@@ -237,10 +255,11 @@ class ProviderServices extends ChangeNotifier {
 
   // Write Parameters Function ............
   Future<void> writeRegister(int address, int value) async {
+    if (_modbusServices == null) return;
     _isWriting = true;
     stopAutoRefresh(); // stop refresh
     try {
-      await _modbusService.writeRegister(address, value);
+      await _modbusServices!.writeRegister(address, value);
       await Future.delayed(const Duration(milliseconds: 100));
       await fetchRegisters();
     } finally {
@@ -257,9 +276,10 @@ class ProviderServices extends ChangeNotifier {
 
   // Write Register with integers ......
   Future<void> writeRegisterInstant(int address, int value) async {
+    if (_modbusServices == null) return;
     setswitchLoading(true);
     try {
-      await _modbusService.writeRegister(address, value);
+      await _modbusServices!.writeRegister(address, value);
     } catch (e) {
       debugPrint("Instant write error: $e");
     } finally {

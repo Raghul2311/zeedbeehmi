@@ -1,10 +1,12 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, non_constant_identifier_names
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:zedbeemodbus/drawer_folder/home_screen.dart';
 import 'package:zedbeemodbus/fields/colors.dart';
+import 'package:zedbeemodbus/fields/shared_pref_helper.dart';
 import 'package:zedbeemodbus/fields/spacer_widget.dart';
 import 'package:zedbeemodbus/services_class/provider_services.dart';
 import 'package:zedbeemodbus/widgets/app_bar.dart';
@@ -20,8 +22,9 @@ class ConfigurationPage extends StatefulWidget {
 
 class _ConfigurationPageState extends State<ConfigurationPage> {
   // Global keys..
-  final _scaffoldKey = GlobalKey<ScaffoldState>(); // text fields
-  final _formKey = GlobalKey<FormState>();
+  final _scaffoldKey = GlobalKey<ScaffoldState>(); // app bar key
+  final _formKey = GlobalKey<FormState>(); // text filed key
+  bool isLoading = false; // Parameter indicator
 
   // controllers for fields ...
   final minTemController = TextEditingController();
@@ -31,31 +34,18 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
   final maxFreqController = TextEditingController();
   final minFreqController = TextEditingController();
   final btucontroller = TextEditingController(); //
-  final watervalvecontroller = TextEditingController();
+  final valvecontroller = TextEditingController();
   final actuatordircontroller = TextEditingController(); //
   final inletcontroller = TextEditingController();
-  final waterdeltacontroller = TextEditingController();
-  final pressureconstantcontroller = TextEditingController();
-  final ductpressurecontroller = TextEditingController();
-  final waterpressurecontroller = TextEditingController();
-  final pidconstantcontroller = TextEditingController();
+  final deltacontroller = TextEditingController();
+  final pressurecontroller = TextEditingController();
+  final ductprecontroller = TextEditingController();
+  final waterprescontroller = TextEditingController();
+  final PDIcontroller = TextEditingController();
   final minspeedcontroller = TextEditingController(); //
   final maxspeedcontroller = TextEditingController(); //
+  final ipcontroller = TextEditingController(); //ip
   // Total 17 controllers ....
-
-  // List for equipment type
-  final List<String> equimentType = [
-    'AHU',
-    'FCU',
-    'VRF',
-    'Chiller',
-    'Cooling Tower',
-  ];
-  final List<String> equimentName = ['AHU-01', 'AHU-02', 'AHU-03', 'AHU-04'];
-  // selection state ....
-  String? selectedEquipment;
-  String? selectedName;
-  bool isLoading = false; // loading indiactor
 
   @override
   void dispose() {
@@ -65,13 +55,14 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     maxFlowController.dispose();
     maxFreqController.dispose();
     minFreqController.dispose();
-    watervalvecontroller.dispose();
+    valvecontroller.dispose();
     inletcontroller.dispose();
-    waterdeltacontroller.dispose();
-    pressureconstantcontroller.dispose();
-    waterpressurecontroller.dispose();
-    ductpressurecontroller.dispose();
-    pidconstantcontroller.dispose();
+    deltacontroller.dispose();
+    pressurecontroller.dispose();
+    waterprescontroller.dispose();
+    ductprecontroller.dispose();
+    PDIcontroller.dispose();
+    ipcontroller.dispose();
     super.dispose();
   }
 
@@ -110,29 +101,64 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     } catch (_) {}
   }
 
+  String? _validationError; // error val
+  bool setLoading = false;
+  // save ip address in array
+  List<String> ipHistory = [];
+
+  // validate the IP format
+  void _validateIp(String value) {
+    if (value.isEmpty) {
+      setState(() => _validationError = "Enter valid IP Address");
+      return;
+    }
+    // format of standard ip address
+    final RegExp ipRegex = RegExp(
+      r"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]?|0)\.){3}"
+      r"(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]?|0)$",
+    );
+
+    if (!ipRegex.hasMatch(value)) {
+      setState(() => _validationError = "Invalid IP format (e.g., 127.0.0.1)");
+    } else {
+      setState(() => _validationError = null);
+    }
+  }
+
+  // load ip history function
+  Future<void> loadIpHistory() async {
+    final history = await SharedPrefHelper.getIpHistory();
+    setState(() {
+      ipHistory = history;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     // Automatically load the values in fields
-    Future.microtask(() {
-      readParameter(context, 49, minTemController, "Min Temp");
-      readParameter(context, 50, maxTempController, "Max Temp");
-      readParameter(context, 36, minFlowController, "Min Flowrate");
-      readParameter(context, 35, maxFlowController, "Max Flowrate");
-      readParameter(context, 30, minFreqController, "Min Freq");
-      readParameter(context, 31, maxFreqController, "Max Freq");
-      readParameter(context, 23, watervalvecontroller, "water value");
-      readParameter(context, 38, inletcontroller, "Inlet Threshold");
-      readParameter(context, 43, waterdeltacontroller, "WaterdeltaT");
-      readParameter(context, 4, waterpressurecontroller, "Water Pressure");
-      readParameter(context, 5, ductpressurecontroller, "Duct Pressure");
-      readParameter(
-        context,
-        37,
-        pressureconstantcontroller,
-        "Pressure Constant",
-      );
-      readParameter(context, 33, pidconstantcontroller, "PDI Constant");
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final lastIp = await SharedPrefHelper.getIp();
+      if (lastIp != null && lastIp.isNotEmpty) {
+        ipcontroller.text = lastIp;
+        _validateIp(lastIp);
+      }
+      // Get the ip history
+      loadIpHistory();
+      // read parameters values
+      await readParameter(context, 49, minTemController, "Min Temp");
+      await readParameter(context, 50, maxTempController, "Max Temp");
+      await readParameter(context, 36, minFlowController, "Min Flowrate");
+      await readParameter(context, 35, maxFlowController, "Max Flowrate");
+      await readParameter(context, 30, minFreqController, "Min Freq");
+      await readParameter(context, 31, maxFreqController, "Max Freq");
+      await readParameter(context, 23, valvecontroller, "water value");
+      await readParameter(context, 38, inletcontroller, "Inlet Threshold");
+      await readParameter(context, 43, deltacontroller, "WaterdeltaT");
+      await readParameter(context, 4, waterprescontroller, "Water Pressure");
+      await readParameter(context, 5, ductprecontroller, "Duct Pressure");
+      await readParameter(context, 37, pressurecontroller, "Pressure Constant");
+      await readParameter(context, 33, PDIcontroller, "PDI Constant");
     });
   }
 
@@ -144,12 +170,12 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         maxFlowController.text.isEmpty &&
         minFreqController.text.isEmpty &&
         maxFreqController.text.isEmpty &&
-        watervalvecontroller.text.isEmpty &&
+        valvecontroller.text.isEmpty &&
         inletcontroller.text.isEmpty &&
-        waterdeltacontroller.text.isEmpty &&
-        waterpressurecontroller.text.isEmpty &&
-        pressureconstantcontroller.text.isEmpty &&
-        pidconstantcontroller.text.isEmpty) {
+        deltacontroller.text.isEmpty &&
+        waterprescontroller.text.isEmpty &&
+        pressurecontroller.text.isEmpty &&
+        PDIcontroller.text.isEmpty) {
       return;
     }
     // validate fields ..
@@ -163,128 +189,49 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     // Delay time
     await Future.delayed(const Duration(seconds: 2));
     // mapping register start here .....
-    if (minTemController.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        49, // register address for Min Temp
-        minTemController.text.trim(),
-        "Min Temp",
-      );
-    }
-    if (maxTempController.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        50, // register address for Min Temp
-        maxTempController.text.trim(),
-        "Max Temp",
-      );
-    }
-    if (minFlowController.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        36, // reg address for min flow
-        minFlowController.text.trim(),
-        "Min Flowrate",
-      );
-    }
-    if (maxFlowController.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        35, // reg address for max flow
-        maxFlowController.text.trim(),
-        "Max Flowrate",
-      );
-    }
-    if (minFreqController.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        30, // reg address for min freq
-        minFreqController.text.trim(),
-        "Min Frequency",
-      );
-    }
-    if (maxFreqController.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        31, // reg address for max freq
-        minFreqController.text.trim(),
-        "Min Frequecny",
-      );
-    }
-    if (watervalvecontroller.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        23, // reg address for water value
-        watervalvecontroller.text.trim(),
-        "Water value",
-      );
-    }
-    if (inletcontroller.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        38, //reg address for inlet
-        inletcontroller.text.trim(),
-        "Inlet Threshold",
-      );
-    }
-    if (waterdeltacontroller.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        43, // reg address for water delta
-        waterdeltacontroller.text.trim(),
-        "Water Delta",
-      );
-    }
-    if (waterpressurecontroller.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        4, // reg address for water pressure
-        waterpressurecontroller.text.trim(),
-        "Water Pressure",
-      );
-    }
 
-    if (ductpressurecontroller.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        5, // reg address for duct pressure
-        ductpressurecontroller.text.trim(),
-        "Duct Pressure",
-      );
+    final parameter = [
+      {"controller": minTemController, "address": 49, "name": "Min Temp"},
+      {"controller": maxTempController, "address": 50, "name": "Max Temp"},
+      {"controller": minFlowController, "address": 36, "name": "Min Flowrate"},
+      {"controller": maxFlowController, "address": 35, "name": "Max Flowrate"},
+      {"controller": minFreqController, "address": 30, "name": "Min Freq"},
+      {"controller": maxFreqController, "address": 31, "name": "Max Freq"},
+      {"controller": valvecontroller, "address": 23, "name": "Water valve"},
+      {"controller": inletcontroller, "address": 38, "name": "Inlet Threshold"},
+      {"controller": deltacontroller, "address": 43, "name": "Water Delta"},
+      {"controller": waterprescontroller, "address": 4, "name": "Water Pres"},
+      {"controller": ductprecontroller, "address": 5, "name": "Duct Pressure"},
+      {"controller": pressurecontroller, "address": 37, "name": "Pressure"},
+      {"controller": PDIcontroller, "address": 33, "name": "PDI Constant"},
+    ];
+    // loop and call writeParameter
+    for (final param in parameter) {
+      final controller = param["controller"] as TextEditingController;
+      final text = controller.text.trim();
+      if (text.isNotEmpty) {
+        await writeParameter(
+          context,
+          param["address"] as int,
+          text,
+          param["name"] as String,
+        );
+      }
     }
-    if (pressureconstantcontroller.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        37, // reg address for pressure constant
-        pressureconstantcontroller.text.trim(),
-        "Pressure Constant",
-      );
-    }
-
-    if (pidconstantcontroller.text.isNotEmpty) {
-      await writeParameter(
-        context,
-        33, // reg address for pid cosntant
-        pidconstantcontroller.text.trim(),
-        "PID Constant",
-      );
-    }
-
     setState(() {
       isLoading = false; // stop loading
     });
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Parameters set successfully",
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Parameters set successfully",
+          style: TextStyle(color: Colors.white),
         ),
-      );
-    }
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   // Text field widget ...
@@ -351,149 +298,13 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     return null;
   }
 
-  // equipment name drop down widget ...
-  Widget _equipmentNameDropdown() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final inputFillColor = isDarkMode ? Colors.black12 : Colors.white;
-    final labelColor = isDarkMode ? Colors.white70 : Colors.black87;
-    return DropdownButtonFormField<String>(
-      isExpanded: true,
-      initialValue: selectedName,
-      decoration: InputDecoration(
-        labelText: 'Equipment Name',
-        labelStyle: TextStyle(color: labelColor),
-        fillColor: inputFillColor,
-        filled: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: isDarkMode ? AppColors.green : Colors.black87,
-          ),
-        ),
-      ),
-      icon: const Icon(Icons.arrow_drop_down),
-      onChanged: (String? newValue) {
-        setState(() {
-          selectedName = newValue!;
-        });
-      },
-      dropdownColor: isDarkMode ? Colors.grey[800] : null,
-      items: equimentName.map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value, style: TextStyle(color: labelColor)),
-        );
-      }).toList(),
-    );
-  }
-
-  // equipment Type drop down widget ...
-  Widget _equipmentTypeDrowpdown() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final inputFillColor = isDarkMode ? Colors.black12 : Colors.white;
-    final labelColor = isDarkMode ? Colors.white70 : Colors.black87;
-    return DropdownButtonFormField<String>(
-      initialValue: selectedEquipment,
-      decoration: InputDecoration(
-        labelText: 'Equipment Type',
-        labelStyle: TextStyle(color: labelColor),
-        fillColor: inputFillColor,
-        filled: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: isDarkMode ? AppColors.green : Colors.black87,
-          ),
-        ),
-      ),
-      icon: const Icon(Icons.arrow_drop_down),
-      onChanged: (String? newValue) {
-        setState(() {
-          selectedEquipment = newValue!;
-        });
-      },
-      dropdownColor: isDarkMode ? Colors.grey[800] : null,
-      items: equimentType.map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value, style: TextStyle(color: labelColor)),
-        );
-      }).toList(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Consumer(
       builder: (context, value, child) {
         return Scaffold(
-          // floating action button starts here .............
-          floatingActionButton: Container(
-            padding: EdgeInsets.all(12),
-            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 25),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.black : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(child: _equipmentTypeDrowpdown()),
-                SpacerWidget.size32w,
-                Expanded(child: _equipmentNameDropdown()),
-                SpacerWidget.size16w,
-                SizedBox(
-                  height: 55,
-                  width: screenWidth * 0.15,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
-                      foregroundColor: Colors.white,
-                      elevation: 5,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: () {
-                      _handleSetButton(); // set button function
-                    },
-                    child: Center(
-                      child: isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            )
-                          : Text(
-                              "Set",
-                              style: GoogleFonts.openSans(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Action button ......
+          // Floating app bar  ......
           floatingActionButtonLocation:
               FloatingActionButtonLocation.endContained,
           key: _scaffoldKey,
@@ -503,6 +314,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
             key: _formKey,
             child: SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     height: 60,
@@ -519,10 +331,51 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 40),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 80),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        SizedBox(
+                          height: 55,
+                          width: screenWidth * 0.14,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.orange,
+                              foregroundColor: Colors.white,
+                              elevation: 5,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                            onPressed: () {
+                              _handleSetButton(); // parameter button function
+                            },
+                            child: Center(
+                              child: isLoading
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    )
+                                  : Text(
+                                      "Set Parameter",
+                                      style: GoogleFonts.openSans(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   SpacerWidget.size32,
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
@@ -591,7 +444,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                           children: [
                             _customTextfield(
                               "water valve",
-                              watervalvecontroller,
+                              valvecontroller,
                               hintText: "0-100",
                               validator: (value) =>
                                   numberValidator(value, "Water value", 0, 100),
@@ -611,7 +464,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                             SpacerWidget.size16w,
                             _customTextfield(
                               "water delta T",
-                              waterdeltacontroller,
+                              deltacontroller,
                               hintText: "0-10",
                               validator: (value) =>
                                   numberValidator(value, "Water Delta", 0, 10),
@@ -622,7 +475,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                           children: [
                             _customTextfield(
                               "Water Pressure",
-                              waterpressurecontroller,
+                              waterprescontroller,
                               hintText: "0-50",
                               validator: (value) => numberValidator(
                                 value,
@@ -634,7 +487,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                             SpacerWidget.size16w,
                             _customTextfield(
                               "Duct pressure",
-                              ductpressurecontroller,
+                              ductprecontroller,
                               hintText: "0-2500",
                               validator: (value) => numberValidator(
                                 value,
@@ -646,7 +499,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                             SpacerWidget.size16w,
                             _customTextfield(
                               "Pressure constant",
-                              pressureconstantcontroller,
+                              pressurecontroller,
                               hintText: "0-5",
                               validator: (value) => numberValidator(
                                 value,
@@ -661,7 +514,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                           children: [
                             _customTextfield(
                               "PDI constant",
-                              pidconstantcontroller,
+                              PDIcontroller,
                               hintText: "0-10",
                               validator: (value) =>
                                   numberValidator(value, "PDI Constant", 0, 10),
@@ -700,10 +553,240 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 180),
                       ],
                     ),
                   ),
+                  SizedBox(height: 50),
+                  // ip container
+                  Container(
+                    height: 60,
+                    width: double.infinity,
+                    decoration: BoxDecoration(color: Colors.grey.shade400),
+                    child: Center(
+                      child: Text(
+                        "IP Configuration",
+                        style: GoogleFonts.poppins(
+                          fontSize: 22,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SpacerWidget.size32,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: screenWidth / 3,
+                          child: TextFormField(
+                            controller: ipcontroller,
+                            keyboardType: TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9.]'),
+                              ),
+                            ],
+                            decoration: InputDecoration(
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  ipcontroller.clear();
+                                },
+                                icon: Icon(Icons.close_rounded),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: _validationError == null
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              ),
+                              labelText: "IP Address",
+                              hintText: "e.g., 192.168.1.1",
+                              border: OutlineInputBorder(),
+                              errorText: _validationError,
+                            ),
+                            onChanged: _validateIp,
+                            onFieldSubmitted: _validateIp,
+                          ),
+                        ),
+                        SpacerWidget.medium,
+                        TextButton(
+                          onPressed: () async {
+                            await SharedPrefHelper.clearIpHistory();
+                            setState(() {
+                              ipHistory.clear();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "IP history cleared",
+                                    style: TextStyle(color: Colors.black),
+                                  ),
+                                  backgroundColor: Colors.amberAccent,
+                                ),
+                              );
+                            });
+                          },
+                          child: Text(
+                            "Clear All",
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        // Recent ip section ..
+                        if (ipHistory.isNotEmpty) ...[
+                          SpacerWidget.large,
+                          Text(
+                            "Recent IPs :",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          SpacerWidget.medium,
+                          // ip address stored as map
+                          Wrap(
+                            spacing: 10,
+                            children: ipHistory.map((ip) {
+                              return ChoiceChip(
+                                label: Text(ip),
+                                selected: ipcontroller.text == ip,
+                                onSelected: (_) {
+                                  setState(() {
+                                    ipcontroller.text = ip;
+                                    _validateIp(ip);
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                        SizedBox(height: 40),
+                        // set IP button
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 150,
+                              height: 50,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.darkblue,
+                                  disabledBackgroundColor: AppColors.darkblue,
+                                ),
+                                onPressed:
+                                    _validationError == null &&
+                                        ipcontroller.text.isNotEmpty &&
+                                        !setLoading
+                                    ? () async {
+                                        setState(() {
+                                          setLoading = true;
+                                        });
+                                        final newIp = ipcontroller.text;
+                                        try {
+                                          // save & store history & update ip                                  await SharedPrefHelper.saveIp(newIp);
+                                          await SharedPrefHelper.saveIpHistory(
+                                            newIp,
+                                          );
+                                          // save last ip
+                                          await SharedPrefHelper.saveIp(newIp);
+                                          // update ip
+                                          await context
+                                              .read<ProviderServices>()
+                                              .updateIp(newIp);
+                                          await Future.delayed(
+                                            const Duration(seconds: 3),
+                                          );
+                                          // success message in home screen
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              backgroundColor: Colors.amber,
+                                              content: Text(
+                                                "IP Address $newIp connected!",
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => HomeScreen(),
+                                            ),
+                                          );
+                                        } finally {
+                                          if (mounted) {
+                                            if (mounted) {
+                                              setState(
+                                                () => setLoading = false,
+                                              );
+                                              await loadIpHistory();
+                                            }
+                                          }
+                                        }
+                                      }
+                                    : null,
+                                child: setLoading
+                                    // circle indicator
+                                    ? SizedBox(
+                                        width: 25,
+                                        height: 25,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                        ),
+                                      )
+                                    : Text(
+                                        "Set IP",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            SizedBox(width: 20),
+                            // cancel button
+                            SizedBox(
+                              width: 150,
+                              height: 50,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                  disabledBackgroundColor: Colors.redAccent,
+                                ),
+                                onPressed: () => Navigator.pop(context),
+                                child: Text(
+                                  "Cancel",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 200),
                 ],
               ),
             ),

@@ -17,6 +17,9 @@ void main() async {
   ]);
   // load Theme status
   themeNotifier.loadTheme();
+  // Initilize provider services
+  final providerservices = ProviderServices();
+  await providerservices.init(); // saved ip
   runApp(
     MultiProvider(
       providers: [
