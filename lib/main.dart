@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:zedbeemodbus/fields/colors.dart';
+import 'package:zedbeemodbus/fields/shared_pref_helper.dart';
 import 'package:zedbeemodbus/fields/theme.dart';
 import 'package:zedbeemodbus/services_class/provider_services.dart';
 import 'package:provider/provider.dart';
@@ -20,11 +21,17 @@ void main() async {
   // Initilize provider services
   final providerservices = ProviderServices();
   await providerservices.init(); // saved ip
+  // Load lastest ip
+  final lastIp = await SharedPrefHelper.getIp();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ProviderServices()),
         ChangeNotifierProvider(create: (_) => ThemeNotifier()),
+        ChangeNotifierProvider(
+          create: (_) => ProviderServices()..updateIp(lastIp ?? ""),
+        ),
       ],
       child: const MyApp(),
     ),

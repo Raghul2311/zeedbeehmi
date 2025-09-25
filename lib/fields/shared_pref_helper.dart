@@ -7,7 +7,7 @@ class SharedPrefHelper {
   static const _checkedIndexesKey = "checked_parameter_indexes";
   static const String _ipHistorykey = "ip_history";
   static const int _maxHistory = 5;
-  static const String _ipkey = "device_ip";
+  static const String _lastIpKey = "last_device_ip";
 
   // To save the parameters
   static Future<void> saveParameters(List<ParameterModel> params) async {
@@ -43,13 +43,13 @@ class SharedPrefHelper {
   // save IP address
   static Future<void> saveIp(String ip) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_ipkey, ip);
+    await prefs.setString(_lastIpKey, ip);
   }
 
   // Get IP address
   static Future<String?> getIp() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_ipkey);
+    return prefs.getString(_lastIpKey);
   }
 
   // save ip with history and Limit

@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppColors.green,
               onRefresh: () async {
                 provider.latestValues;
-                await Future.delayed(const Duration(seconds: 10));
+                await Future.delayed(const Duration(seconds: 7));
               },
               child: SingleChildScrollView(
                 child: Column(
