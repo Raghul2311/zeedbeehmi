@@ -91,6 +91,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     try {
       // Fetch latest values from provider
       await context.read<ProviderServices>().fetchRegisters();
+      if (!mounted) return; // ✅ prevents crash
       final latestValues = context.read<ProviderServices>().latestValues;
 
       if (address < latestValues.length) {
@@ -138,6 +139,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     super.initState();
     // Automatically load the values in fields
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return; // ✅ prevents crash
       final lastIp = await SharedPrefHelper.getIp();
       if (lastIp != null && lastIp.isNotEmpty) {
         ipcontroller.text = lastIp;
