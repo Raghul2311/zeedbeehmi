@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zedbeemodbus/fields/spacer_widget.dart';
 import '../fields/colors.dart';
 import '../services_class/provider_services.dart';
 
@@ -39,10 +38,27 @@ class _ParametersListScreenState extends State<ParametersListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ProviderServices>(context);
+     final provider = Provider.of<ProviderServices>(context);
     final parameters = provider.allParameters;
 
-    final isDark = Theme.of(context).brightness == Brightness.dark; // Theme
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Responsive configuration
+    final crossAxisCount = width < 600
+        ? 2
+        : width < 900
+            ? 3
+            : 4; // automatically adjust columns based on screen width
+    final textScale = (width / 400).clamp(0.8, 1.4); // text scaling factor
+    final valueFontSize = 20 * textScale;
+    final nameFontSize = 14 * textScale;
+    final cardPadding = width * 0.025;
+    final buttonHeight = height * 0.06;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -60,27 +76,25 @@ class _ParametersListScreenState extends State<ParametersListScreen> {
               children: [
                 Expanded(
                   child: GridView.builder(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(width * 0.025),
                     itemCount: parameters.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4, // Show 4 per row
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 2.2,
-                        ),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: height * 0.015,
+                      crossAxisSpacing: width * 0.025,
+                      childAspectRatio: width < 600 ? 1.8 : 2.2,
+                    ),
                     itemBuilder: (context, index) {
                       final param = parameters[index];
                       final isSelected = selectedIndexes.contains(index);
-                      // status ON/OFF
-                      String value;
-                      value = index < provider.latestValues.length
+
+                      final value = index < provider.latestValues.length
                           ? provider.getFormattedValue(
                               param["name"] as String,
                               provider.latestValues[index],
                             )
                           : "--";
-                      // select the parmeter
+
                       return GestureDetector(
                         onTap: () {
                           setState(() {
@@ -93,7 +107,7 @@ class _ParametersListScreenState extends State<ParametersListScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
-                                      "Only 5 parameters can be selected at a time !!!!",
+                                      "Only 5 parameters can be selected at a time!",
                                       style: TextStyle(color: Colors.white),
                                     ),
                                     backgroundColor: Colors.red,
@@ -105,7 +119,7 @@ class _ParametersListScreenState extends State<ParametersListScreen> {
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(10),
+                          padding: EdgeInsets.all(cardPadding * 0.6),
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
@@ -118,7 +132,7 @@ class _ParametersListScreenState extends State<ParametersListScreen> {
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black12,
-                                blurRadius: 4,
+                                blurRadius: 5,
                                 offset: const Offset(0, 2),
                               ),
                             ],
@@ -130,26 +144,23 @@ class _ParametersListScreenState extends State<ParametersListScreen> {
                               Text(
                                 param["name"]!,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: nameFontSize,
                                   fontWeight: FontWeight.w500,
-                                  color: isDark ? Colors.white : Colors.black87,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              SpacerWidget.size8w,
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    value,
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black,
-                                    ),
-                                  ),
-                                ],
+                              SizedBox(height: height * 0.008),
+                              Text(
+                                value,
+                                style: TextStyle(
+                                  fontSize: valueFontSize,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      isDark ? Colors.white : Colors.black87,
+                                ),
                               ),
                             ],
                           ),
@@ -158,17 +169,19 @@ class _ParametersListScreenState extends State<ParametersListScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 150),
+                SizedBox(height: height * 0.12),
               ],
             ),
           ),
+
+          // Save Button
           Positioned(
-            left: 10,
-            right: 10,
-            bottom: 10,
+            left: width * 0.04,
+            right: width * 0.04,
+            bottom: height * 0.03,
             child: SizedBox(
               width: double.infinity,
-              height: 44,
+              height: buttonHeight,
               child: ElevatedButton(
                 onPressed: isSaving ? null : saveSelectedParameters,
                 style: ElevatedButton.styleFrom(
@@ -178,17 +191,21 @@ class _ParametersListScreenState extends State<ParametersListScreen> {
                   ),
                 ),
                 child: isSaving
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
+                    ? SizedBox(
+                        width: buttonHeight * 0.5,
+                        height: buttonHeight * 0.5,
+                        child: const CircularProgressIndicator(
                           color: Colors.white,
                           strokeWidth: 2.5,
                         ),
                       )
-                    : const Text(
-                        "Save Parameter",
-                        style: TextStyle(color: Colors.white),
+                    : Text(
+                        "Save Parameters",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: width * 0.045,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
               ),
             ),

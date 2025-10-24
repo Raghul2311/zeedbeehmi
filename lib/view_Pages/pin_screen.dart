@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zedbeemodbus/drawer_folder/home_screen.dart';
 import 'package:zedbeemodbus/fields/colors.dart';
-import 'package:zedbeemodbus/fields/spacer_widget.dart';
 
 class PinScreen extends StatefulWidget {
   const PinScreen({super.key});
@@ -45,21 +44,29 @@ class _PinScreenState extends State<PinScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // media query width size
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+   final size = MediaQuery.of(context).size;
+    final height = size.height;
+    final width = size.width;
+
+    // Responsive sizing ratios
+    final dialogWidth = width * 0.8; // 80% of screen width
+    final dialogHeight = height * 0.45; // 45% of screen height
+    final buttonHeight = height * 0.06;
+    final buttonWidth = width * 0.35;
+    final fontSize = width * 0.045;
+
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadiusGeometry.circular(30),
+        borderRadius: BorderRadius.circular(30),
       ),
       backgroundColor: Colors.transparent,
       child: Container(
-        width: screenWidth / 3,
-        height: screenHeight * 0.5,
+        width: dialogWidth,
+        height: dialogHeight,
         decoration: BoxDecoration(
           color: AppColors.lightblue,
           borderRadius: BorderRadius.circular(30),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Colors.black26,
               blurRadius: 8,
@@ -68,78 +75,89 @@ class _PinScreenState extends State<PinScreen> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Enter Your PIN",
-                style: GoogleFonts.openSans(
-                  fontSize: 18,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SpacerWidget.size32,
-              // PIN input
-              TextFormField(
-                cursorColor: Colors.white,
-                controller: pinController,
-                maxLength: 4,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  suffixIcon: Icon(
-                    Icons.lock,
-                    color: AppColors.green,
-                    size: 20,
-                  ),
-                  filled: true,
-                  fillColor: Color(0xff2C2A2A),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
+          padding: EdgeInsets.symmetric(
+            horizontal: width * 0.05, // Responsive padding
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Enter Your PIN",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.openSans(
+                    fontSize: fontSize,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              SpacerWidget.size32,
-              InkWell(
-                onTap: _isLoading ? null : _validatePin,
-                child: Container(
-                  height: 50,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.green,
-                    borderRadius: BorderRadius.circular(20),
+                SizedBox(height: height * 0.04),
+                TextFormField(
+                  cursorColor: Colors.white,
+                  controller: pinController,
+                  maxLength: 4,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: fontSize * 0.9,
                   ),
-                  child: Center(
-                    child: _isLoading
-                        ? SizedBox(
-                            width: 25,
-                            height: 25,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    counterText: '',
+                    suffixIcon: Icon(
+                      Icons.lock,
+                      color: AppColors.green,
+                      size: fontSize,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xff2C2A2A),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: height * 0.02,
+                      horizontal: width * 0.04,
+                    ),
+                  ),
+                ),
+                SizedBox(height: height * 0.04),
+                InkWell(
+                  onTap: _isLoading ? null : _validatePin,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    height: buttonHeight,
+                    width: buttonWidth,
+                    decoration: BoxDecoration(
+                      color: AppColors.green,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: _isLoading
+                          ? SizedBox(
+                              width: buttonHeight * 0.4,
+                              height: buttonHeight * 0.4,
+                              child: const CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 2.5,
                               ),
-                              strokeWidth: 2.5,
+                            )
+                          : Text(
+                              "NEXT",
+                              style: GoogleFonts.openSans(
+                                fontSize: fontSize,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          )
-                        : Text(
-                            "NEXT",
-                            style: GoogleFonts.openSans(
-                              fontSize: 18,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

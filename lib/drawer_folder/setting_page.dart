@@ -5,8 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:zedbeemodbus/view_Pages/parameters_list.dart';
 import 'package:zedbeemodbus/fields/colors.dart';
-import 'package:zedbeemodbus/fields/spacer_widget.dart';
-import 'package:zedbeemodbus/model_folder/parameters_model.dart';
 import 'package:zedbeemodbus/services_class/provider_services.dart';
 import 'package:zedbeemodbus/widgets/app_bar.dart';
 import 'package:zedbeemodbus/widgets/app_drawer.dart';
@@ -19,81 +17,78 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  // Key to access app bar...
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-
-  // To store the draggable items.........
-  final List<ParameterModel> draggableItems = [];
 
   @override
   void initState() {
     super.initState();
-    // Get the loaded parameters
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProviderServices>().loadSavedData();
     });
   }
 
-  // Save button for selected parameters ....
-  void saveSetting() async {
+  // save button
+  Future<void> saveSetting() async {
     final provider = Provider.of<ProviderServices>(context, listen: false);
     await provider.saveData();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Parameter Saved', style: TextStyle(color: Colors.white)),
+      const SnackBar(
+        content: Text(
+          'Parameters saved successfully',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.green,
       ),
     );
   }
 
+  // clear confirmation dialog
+  void showClearParametersAlert(BuildContext context) {
+    final provider = Provider.of<ProviderServices>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Clear Parameters'),
+          content: const Text('Do you want to clear all the parameters?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('No', style: TextStyle(color: AppColors.green)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                provider.clearParameters();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Parameters cleared successfully',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              child: Text('Yes', style: TextStyle(color: AppColors.green)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // media queryies for height and width
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    // provider function for parameters...............
     final provider = Provider.of<ProviderServices>(context);
-    // Alert box for parameter ........
-    void showClearParametersAlert(BuildContext context) {
-      showDialog(
-        context: context,
-        builder: (BuildContext dialogContext) {
-          return AlertDialog(
-            title: const Text('Clear Parameters'),
-            content: const Text('Do you want to clear all the parameters?'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(
-                    dialogContext,
-                  ).pop(); // Dismiss the dialog for "No"
-                },
-                child: Text('No', style: TextStyle(color: AppColors.green)),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(
-                    dialogContext,
-                  ).pop(); // Dismiss the dialog for "Yes"
-                  provider.clearParameters(); // clear params
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        "Parmeter Cleared successfully",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                },
-                child: Text('Yes', style: TextStyle(color: AppColors.green)),
-              ),
-            ],
-          );
-        },
-      );
-    }
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
+    final isTablet = width > 800;
+    final scale = (width / 400).clamp(0.8, 1.4);
+    final buttonFont = 16 * scale;
+    final labelFont = 14 * scale;
 
     return Consumer<ProviderServices>(
       builder: (context, value, child) {
@@ -102,192 +97,199 @@ class _SettingPageState extends State<SettingPage> {
           appBar: CustomAppBar(scaffoldKey: _scaffoldKey),
           drawer: AppDrawer(selectedScreen: 'settings'),
           body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SpacerWidget.size32,
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: width * 0.03),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    SizedBox(height: height * 0.03),
+
+                    // === Top Action Buttons ===
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: width * 0.025,
+                      runSpacing: 12,
                       children: [
-                        // Save Button
-                        InkWell(
-                          onTap: () {
-                            // save Parameters Function
-                            saveSetting();
-                          },
-                          child: Container(
-                            height: 50,
-                            width: 130,
-                            decoration: BoxDecoration(
-                              color: AppColors.darkblue,
+                        // Save button
+                        ElevatedButton.icon(
+                          onPressed: saveSetting,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.darkblue,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: width * 0.04,
+                              vertical: height * 0.015,
+                            ),
+                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.save, color: Colors.white),
-                                SpacerWidget.size8w,
-                                Text(
-                                  "Save",
-                                  style: GoogleFonts.openSans(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                          ),
+                          icon: const Icon(Icons.save, color: Colors.white),
+                          label: Text(
+                            "Save",
+                            style: GoogleFonts.openSans(
+                              color: Colors.white,
+                              fontSize: buttonFont,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        SpacerWidget.size16w,
-                        // Add Parameter Button
-                        GestureDetector(
-                          onTap: () {
+
+                        // Add Parameter
+                        ElevatedButton.icon(
+                          onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ParametersListScreen(),
+                                builder: (context) =>
+                                    const ParametersListScreen(),
                               ),
                             );
                           },
-                          child: Container(
-                            height: 50,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: AppColors.orange,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.orange,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: width * 0.04,
+                              vertical: height * 0.015,
+                            ),
+                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.list_alt_rounded,
-                                  color: Colors.white,
-                                ),
-                                SpacerWidget.size8w,
-                                Text(
-                                  "Add Parameter",
-                                  style: GoogleFonts.openSans(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                          ),
+                          icon: const Icon(
+                            Icons.list_alt_rounded,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            "Add Parameter",
+                            style: GoogleFonts.openSans(
+                              color: Colors.white,
+                              fontSize: buttonFont,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        SpacerWidget.size16w,
-                        // clear all parmeter
-                        GestureDetector(
-                          onTap: () {
-                            showClearParametersAlert(context);
-                          },
-                          child: Container(
-                            height: 50,
-                            width: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.red,
+
+                        // Clear Parameters
+                        ElevatedButton(
+                          onPressed: () => showClearParametersAlert(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: EdgeInsets.all(width * 0.03),
+                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Center(
-                              child: Icon(
-                                Icons.delete,
-                                color: Colors.white,
-                                size: 25,
-                              ),
-                            ),
+                          ),
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                            size: 25,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  SpacerWidget.size32,
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                      child: Container(
-                        height: screenHeight * 0.70,
-                        width: screenWidth,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Static image inside container
-                            Center(
-                              child: Image.asset(
-                                "images/ahuimage.png",
-                                height: screenHeight,
-                                width: screenWidth * 0.90,
-                                fit: BoxFit.cover,
-                              ),
+
+                    SizedBox(height: height * 0.04),
+
+                    // === AHU Image Canvas ===
+                    Container(
+                      width: double.infinity,
+                      height: isTablet ? height * 0.7 : height * 0.65,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade400),
+                      ),
+                      child: Stack(
+                        children: [
+                          // background image
+                          Center(
+                            child: Image.asset(
+                              "images/ahuimage.png",
+                              width: width * 0.9,
+                              height: double.infinity,
+                              fit: BoxFit.contain,
                             ),
-                            // Draggable parameters
-                            ...provider.parameters.asMap().entries.map((e) {
-                              final index = e.key;
-                              final item = e.value;
-                              return Positioned(
-                                left: item.dx,
-                                top: item.dy,
-                                child: GestureDetector(
-                                  onPanUpdate: (details) {
-                                    provider.updatePosition(
-                                      index,
-                                      (item.dx + details.delta.dx).clamp(
-                                        0.0,
-                                        1050.0,
+                          ),
+
+                          // draggable parameter boxes
+                          ...provider.parameters.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final item = entry.value;
+
+                            final maxWidth = width * 0.9;
+                            final maxHeight = isTablet
+                                ? height * 0.6
+                                : height * 0.55; // image boundaries
+
+                            return Positioned(
+                              left: (item.dx).clamp(0.0, maxWidth - 100),
+                              top: (item.dy).clamp(0.0, maxHeight - 40),
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  provider.updatePosition(
+                                    index,
+                                    (item.dx + details.delta.dx).clamp(
+                                      0.0,
+                                      maxWidth - 100,
+                                    ),
+                                    (item.dy + details.delta.dy).clamp(
+                                      0.0,
+                                      maxHeight - 40,
+                                    ),
+                                  );
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: width * 0.02,
+                                    vertical: height * 0.005,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.8),
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
                                       ),
-                                      (item.dy + details.delta.dy).clamp(
-                                        0.0,
-                                        500.0,
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        "${item.text}: ${provider.getFormattedValue(item.text, int.tryParse(item.value) ?? 0)}",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: labelFont,
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.orange.withOpacity(0.8),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          "${item.text}: ${provider.getFormattedValue(item.text, int.tryParse(item.value) ?? 0)}",
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                      SizedBox(width: width * 0.01),
+                                      InkWell(
+                                        onTap: () => provider.removeParameter(
+                                          item.registerIndex ?? 0,
                                         ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.close,
-                                            size: 20,
-                                            color: Colors.red,
-                                          ),
-                                          onPressed: () =>
-                                              provider.removeParameter(
-                                                item.registerIndex!,
-                                              ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          size: 18,
+                                          color: Colors.red,
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              );
-                            }),
-                          ],
-                        ),
+                              ),
+                            );
+                          }),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+
+                    SizedBox(height: height * 0.05),
+                  ],
+                ),
               ),
             ),
           ),

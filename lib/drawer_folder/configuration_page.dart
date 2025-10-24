@@ -341,7 +341,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                       children: [
                         SizedBox(
                           height: 55,
-                          width: screenWidth * 0.14,
+                          width: screenWidth * 0.40,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.orange,
@@ -374,189 +374,185 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                     ),
                   ),
                   SpacerWidget.size32,
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            _customTextfield(
-                              "Min Temp",
-                              minTemController,
-                              hintText: "0-50",
-                              validator: (value) =>
-                                  numberValidator(value, "Min Temp", 0, 50),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          _customTextfield(
+                            "Min Temp",
+                            minTemController,
+                            hintText: "0-50",
+                            validator: (value) =>
+                                numberValidator(value, "Min Temp", 0, 50),
+                          ),
+                          SpacerWidget.size16w,
+                          _customTextfield(
+                            "Max Temp",
+                            maxTempController,
+                            hintText: "0-50",
+                            validator: (value) =>
+                                numberValidator(value, "Max Temp", 0, 50),
+                          ),
+                          SpacerWidget.size16w,
+                          _customTextfield(
+                            "Min Flowrate",
+                            minFlowController,
+                            hintText: "0-50",
+                            validator: (value) =>
+                                numberValidator(value, "Min Flowrate", 0, 50),
+                          ),
+                          SpacerWidget.size16w,
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          _customTextfield(
+                            "Max Flowrate",
+                            maxFlowController,
+                            hintText: "0-50",
+                            validator: (value) =>
+                                numberValidator(value, "Max Flowrate", 0, 50),
+                          ),
+                          SpacerWidget.size16w,
+                          _customTextfield(
+                            "Max Freq",
+                            maxFreqController,
+                            hintText: "0-50",
+                            validator: (value) => numberValidator(
+                              value,
+                              "Max Frequency",
+                              0,
+                              50,
                             ),
-                            SpacerWidget.size16w,
-                            _customTextfield(
-                              "Max Temp",
-                              maxTempController,
-                              hintText: "0-50",
-                              validator: (value) =>
-                                  numberValidator(value, "Max Temp", 0, 50),
+                          ),
+                          SpacerWidget.size16w,
+                          _customTextfield(
+                            "Min Freq",
+                            minFreqController,
+                            hintText: "0-50",
+                            validator: (value) => numberValidator(
+                              value,
+                              "Min Frequecny",
+                              0,
+                              50,
                             ),
-                            SpacerWidget.size16w,
-                            _customTextfield(
-                              "Min Flowrate",
-                              minFlowController,
-                              hintText: "0-50",
-                              validator: (value) =>
-                                  numberValidator(value, "Min Flowrate", 0, 50),
-                            ),
-                            SpacerWidget.size16w,
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            _customTextfield(
-                              "Max Flowrate",
-                              maxFlowController,
-                              hintText: "0-50",
-                              validator: (value) =>
-                                  numberValidator(value, "Max Flowrate", 0, 50),
-                            ),
-                            SpacerWidget.size16w,
-                            _customTextfield(
-                              "Max Freq",
-                              maxFreqController,
-                              hintText: "0-50",
-                              validator: (value) => numberValidator(
-                                value,
-                                "Max Frequency",
-                                0,
-                                50,
-                              ),
-                            ),
-                            SpacerWidget.size16w,
-                            _customTextfield(
-                              "Min Freq",
-                              minFreqController,
-                              hintText: "0-50",
-                              validator: (value) => numberValidator(
-                                value,
-                                "Min Frequecny",
-                                0,
-                                50,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            _customTextfield(
-                              "water valve",
-                              valvecontroller,
-                              hintText: "0-100",
-                              validator: (value) =>
-                                  numberValidator(value, "Water value", 0, 100),
-                            ),
-                            SpacerWidget.size16w,
-                            _customTextfield(
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          _customTextfield(
+                            "water valve",
+                            valvecontroller,
+                            hintText: "0-100",
+                            validator: (value) =>
+                                numberValidator(value, "Water value", 0, 100),
+                          ),
+                          SpacerWidget.size16w,
+                          _customTextfield(
+                            "Inlet Threshold",
+                            inletcontroller,
+                            hintText: "0-15",
+                            validator: (value) => numberValidator(
+                              value,
                               "Inlet Threshold",
-                              inletcontroller,
-                              hintText: "0-15",
-                              validator: (value) => numberValidator(
-                                value,
-                                "Inlet Threshold",
-                                0,
-                                15,
-                              ),
+                              0,
+                              15,
                             ),
-                            SpacerWidget.size16w,
-                            _customTextfield(
-                              "water delta T",
-                              deltacontroller,
-                              hintText: "0-10",
-                              validator: (value) =>
-                                  numberValidator(value, "Water Delta", 0, 10),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            _customTextfield(
+                          ),
+                          SpacerWidget.size16w,
+                          _customTextfield(
+                            "water delta T",
+                            deltacontroller,
+                            hintText: "0-10",
+                            validator: (value) =>
+                                numberValidator(value, "Water Delta", 0, 10),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          _customTextfield(
+                            "Water Pressure",
+                            waterprescontroller,
+                            hintText: "0-50",
+                            validator: (value) => numberValidator(
+                              value,
                               "Water Pressure",
-                              waterprescontroller,
-                              hintText: "0-50",
-                              validator: (value) => numberValidator(
-                                value,
-                                "Water Pressure",
-                                0,
-                                50,
-                              ),
+                              0,
+                              50,
                             ),
-                            SpacerWidget.size16w,
-                            _customTextfield(
-                              "Duct pressure",
-                              ductprecontroller,
-                              hintText: "0-2500",
-                              validator: (value) => numberValidator(
-                                value,
-                                "Duct Pressure",
-                                0,
-                                2500,
-                              ),
+                          ),
+                          SpacerWidget.size16w,
+                          _customTextfield(
+                            "Duct pressure",
+                            ductprecontroller,
+                            hintText: "0-2500",
+                            validator: (value) => numberValidator(
+                              value,
+                              "Duct Pressure",
+                              0,
+                              2500,
                             ),
-                            SpacerWidget.size16w,
-                            _customTextfield(
-                              "Pressure constant",
-                              pressurecontroller,
-                              hintText: "0-5",
-                              validator: (value) => numberValidator(
-                                value,
-                                "Pressure Constant",
-                                0,
-                                5,
-                              ),
+                          ),
+                          SpacerWidget.size16w,
+                          _customTextfield(
+                            "Pressure constant",
+                            pressurecontroller,
+                            hintText: "0-5",
+                            validator: (value) => numberValidator(
+                              value,
+                              "Pressure Constant",
+                              0,
+                              5,
                             ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            _customTextfield(
-                              "PDI constant",
-                              PDIcontroller,
-                              hintText: "0-10",
-                              validator: (value) =>
-                                  numberValidator(value, "PDI Constant", 0, 10),
-                            ),
-                          ],
-                        ),
-                        SpacerWidget.size32,
-                        // configuration toggle button
-                        Row(
-                          children: [
-                            // Internal and External
-                            CustomToggleContainer(
-                              title: "BTU Selection",
-                              options: ["Internal", "External"],
-                              fillColor: Colors.green,
-                              splashColor: Colors.green.shade100,
-                              titleColor: Colors.green,
-                            ),
-                            SpacerWidget.size64w,
-                            // temp & pressure
-                            CustomToggleContainer(
-                              title: "Control",
-                              options: ["Temperature", "Pressure"],
-                              fillColor: Colors.red,
-                              splashColor: Colors.red.shade100,
-                              titleColor: Colors.red,
-                            ),
-                            SpacerWidget.size64w,
-                            // Actuator Direction
-                            CustomToggleContainer(
-                              title: "Actuator Direction",
-                              options: ['Forward', 'Reverse'],
-                              fillColor: Colors.blue,
-                              splashColor: Colors.blue.shade100,
-                              titleColor: Colors.blue,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          _customTextfield(
+                            "PDI constant",
+                            PDIcontroller,
+                            hintText: "0-10",
+                            validator: (value) =>
+                                numberValidator(value, "PDI Constant", 0, 10),
+                          ),
+                        ],
+                      ),
+                      SpacerWidget.size32,
+                      // configuration toggle button
+                      // Row(
+                      //   children: [
+                      //     // Internal and External
+                      //     CustomToggleContainer(
+                      //       title: "BTU Selection",
+                      //       options: ["Internal", "External"],
+                      //       fillColor: Colors.green,
+                      //       splashColor: Colors.green.shade100,
+                      //       titleColor: Colors.green,
+                      //     ),
+                      //     SpacerWidget.size64w,
+                      //     // temp & pressure
+                      //     CustomToggleContainer(
+                      //       title: "Control",
+                      //       options: ["Temperature", "Pressure"],
+                      //       fillColor: Colors.red,
+                      //       splashColor: Colors.red.shade100,
+                      //       titleColor: Colors.red,
+                      //     ),
+                      //     // Actuator Direction
+                      //     CustomToggleContainer(
+                      //       title: "Actuator Direction",
+                      //       options: ['Forward', 'Reverse'],
+                      //       fillColor: Colors.blue,
+                      //       splashColor: Colors.blue.shade100,
+                      //       titleColor: Colors.blue,
+                      //     ),
+                      //   ],
+                      // ),
+                    ],
                   ),
                   SizedBox(height: 50),
                   // ip container

@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:zedbeemodbus/view_Pages/enter_page.dart';
 import 'package:zedbeemodbus/fields/colors.dart';
-import 'package:zedbeemodbus/fields/spacer_widget.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -26,21 +25,30 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get device size
+    final size = MediaQuery.of(context).size;
+    final height = size.height;
+    final width = size.width;
+
     return Scaffold(
-      backgroundColor: Theme.of(
-        context,
-      ).scaffoldBackgroundColor, // theme background color
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("images/logo.png", height: 80, fit: BoxFit.cover),
-            SpacerWidget.large,
+            // Responsive logo
+            Image.asset(
+              "images/logo.png",
+              height: height * 0.15, // 15% of screen height
+              width: width * 0.4, // 40% of screen width
+              fit: BoxFit.contain,
+            ),
+            SizedBox(height: height * 0.05), // responsive vertical spacing
             SizedBox(
-              height: 60,
-              width: 70,
+              height: height * 0.08, // 8% of screen height
+              width: height * 0.08,  // keep it square
               child: CircularProgressIndicator(
-                strokeWidth: 8,
+                strokeWidth: height * 0.008, // stroke scales too
                 color: AppColors.green,
               ),
             ),
